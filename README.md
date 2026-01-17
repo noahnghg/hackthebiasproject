@@ -2,20 +2,22 @@
 
 A FastAPI-based application designed to reduce hiring bias by parsing, anonymizing, and semantically matching resumes and job descriptions.
 
-## Features (Planned)
+## Features
 
 - **Resume Parsing**: Extract structured data from PDF resumes using `pdfplumber`.
 - **Anonymization**: Remove personally identifiable information (PII) to ensure unbiased screening using `spacy` NER.
 - **Semantic Matching**: Match candidates to jobs based on skills and context using `sentence-transformers`.
 - **REST API**: Built with `FastAPI` for high performance and easy integration.
+- **React Frontend**: Modern UI built with React and Vite.
 
 ## Getting Started
 
 ### Prerequisites
 
-- **Python 3.9+** (Python 3.14 is currently unsupported by some dependencies, so Python 3.9 is recommended).
+- **Python 3.9+** (Python 3.14 is currently unsupported by some dependencies)
+- **Node.js 18+** (for frontend)
 
-### Installation
+### Backend Setup
 
 1. **Clone the repository**
    ```bash
@@ -24,18 +26,16 @@ A FastAPI-based application designed to reduce hiring bias by parsing, anonymizi
    ```
 
 2. **Create a Virtual Environment**
-   It is recommended to use `venv` to manage dependencies.
    ```bash
-   # Using Python 3.9 (or your reliable python3 executable)
    python3 -m venv venv
    ```
 
 3. **Activate the Virtual Environment**
-   - On macOS/Linux:
+   - macOS/Linux:
      ```bash
      source venv/bin/activate
      ```
-   - On Windows:
+   - Windows:
      ```bash
      .\venv\Scripts\activate
      ```
@@ -45,36 +45,60 @@ A FastAPI-based application designed to reduce hiring bias by parsing, anonymizi
    pip install -r requirements.txt
    ```
 
-5. **Download Language Models**
-   This project uses `spacy` for natural language processing. You need to download the English core model.
+5. **Download spaCy Model**
    ```bash
    python -m spacy download en_core_web_sm
    ```
 
-## Usage
+6. **Run the Backend Server**
+   ```bash
+   uvicorn main:app --reload
+   ```
+   - API: `http://127.0.0.1:8000`
+   - Docs: `http://127.0.0.1:8000/docs`
 
-### Running the Application
+### Frontend Setup
 
-Start the development server using `uvicorn`:
+1. **Navigate to frontend folder**
+   ```bash
+   cd frontend
+   ```
 
-```bash
-uvicorn main:app --reload
-```
-The API will be available at `http://127.0.0.1:8000`. 
-Interactive API documentation is available at `http://127.0.0.1:8000/docs`.
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Run the development server**
+   ```bash
+   npm run dev
+   ```
+   - Frontend: `http://localhost:3000`
 
 ## Project Structure
 
 ```
 hackthebiasproject/
 ├── app/
-│   ├── jobs.py          # Job description management
-│   └── resumes.py       # Resume upload and processing logic
+│   ├── routes/          # API endpoints
+│   └── services/        # Business logic
+├── core/
+│   └── database.py      # SQLite database with SQLModel
+├── models/              # Pydantic models
 ├── utils/
-│   ├── anonymizer.py    # PII removal logic
-│   ├── parser.py        # PDF extraction helpers
-│   └── semantics.py     # Embedding and similarity scoring
-├── main.py              # Application entry point
-├── requirements.txt     # Python dependencies
-└── README.md            # Project documentation
+│   ├── anonymizer.py    # PII removal
+│   ├── parser.py        # PDF extraction
+│   └── semantics.py     # NLP matching
+├── frontend/            # React + Vite frontend
+├── main.py              # FastAPI entry point
+└── requirements.txt     # Python dependencies
 ```
+
+## API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/jobs/` | GET | List all jobs |
+| `/jobs/` | POST | Create a job |
+| `/users/upload-resume` | POST | Upload resume & create/update user |
+| `/applications/` | POST | Create application |
