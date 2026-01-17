@@ -4,8 +4,7 @@ import re
 from typing import Dict, List, Optional
 from dataclasses import dataclass, asdict
 import json
-import hashlib
-import random
+
 
 @dataclass
 class ResumeData:
@@ -18,8 +17,8 @@ class ResumeData:
     skills: List[str] = None
     experience: List[Dict] = None
     education: List[Dict] = None
-    anonymized: bool = False  # Track if data is anonymized
-    candidate_id: Optional[str] = None  # Anonymous ID
+    anonymized: bool = False
+    candidate_id: Optional[str] = None
     
     def __post_init__(self):
         if self.skills is None:
@@ -36,24 +35,111 @@ class ResumeData:
     def to_json(self, indent=2):
         """Convert to JSON string"""
         return json.dumps(self.to_dict(), indent=indent)
+    
+    def to_sentence_transformer_format(self) -> Dict[str, str]:
+        """Convert resume to format optimized for sentence transformers
+        
+        Returns a dictionary with structured text segments ready for embedding
+        """
+        segments = {}
+        
+        # 1. Profile segment - high-level overview
+        profile_parts = []
+        if self.location:
+            profile_parts.append(f"Location: {self.location}")
+        if self.summary:
+            profile_parts.append(self.summary)
+        if self.skills:
+            profile_parts.append(f"Technical Skills: {', '.join(self.skills)}")
+        
+        segments['profile'] = ' '.join(profile_parts)
+        
+        # 2. Skills segment - just the skills list for easy matching
+        segments['skills'] = ', '.join(self.skills) if self.skills else ''
+        
+        # 3. Experience segments - one text block per job
+        experience_texts = []
+        for i, exp in enumerate(self.experience):
+            exp_parts = []
+            if exp.get('title'):
+                exp_parts.append(f"Position: {exp['title']}")
+            if exp.get('company'):
+                exp_parts.append(f"Company: {exp['company']}")
+            if exp.get('dates'):
+                exp_parts.append(f"Duration: {exp['dates']}")
+            if exp.get('responsibilities'):
+                exp_parts.append("Responsibilities: " + ' '.join(exp['responsibilities']))
+            
+            experience_texts.append(' '.join(exp_parts))
+        
+        segments['experience'] = ' | '.join(experience_texts)
+        
+        # 4. Education segment
+        education_texts = []
+        for edu in self.education:
+            edu_parts = []
+            if edu.get('degree'):
+                edu_parts.append(edu['degree'])
+            if edu.get('institution'):
+                edu_parts.append(edu['institution'])
+            if edu.get('dates'):
+                edu_parts.append(edu['dates'])
+            education_texts.append(' '.join(edu_parts))
+        
+        segments['education'] = ' | '.join(education_texts)
+        
+        # 5. Full text - everything combined for general semantic search
+        full_text_parts = [
+            segments['profile'],
+            segments['experience'],
+            segments['education']
+        ]
+        segments['full_text'] = ' '.join(filter(None, full_text_parts))
+        
+        # Add metadata
+        segments['candidate_id'] = self.candidate_id or 'UNKNOWN'
+        segments['is_anonymized'] = str(self.anonymized)
+        
+        return segments
+    
+    def to_sentence_list(self) -> List[str]:
+        """Convert resume to a list of sentences for batch embedding
+        
+        Useful for creating embeddings of each sentence separately
+        """
+        sentences = []
+        
+        # Add summary sentences
+        if self.summary:
+            # Split by periods, clean up
+            summary_sentences = [s.strip() + '.' for s in self.summary.split('.') if s.strip()]
+            sentences.extend(summary_sentences)
+        
+        # Add experience bullets
+        for exp in self.experience:
+            if exp.get('responsibilities'):
+                sentences.extend(exp['responsibilities'])
+        
+        return sentences
 
 
 class ResumeParser:
     """Parse resume PDFs and extract structured data"""
     
-    def __init__(self,pdf_path: str,spacy_model="en_core_web_sm"):
-        """Initialize parser with spaCy model"""
+    def __init__(self, pdf_path: str, spacy_model="en_core_web_sm"):
+        """Initialize parser with spaCy model and PDF path"""
         if not pdf_path:
             raise ValueError("pdf_path must be provided")
 
         self.pdf_path = pdf_path
+        
         try:
             self.nlp = spacy.load(spacy_model)
         except OSError:
             print(f"Model '{spacy_model}' not found. Run: python -m spacy download {spacy_model}")
             raise
         
-        # Common technical skills (expand this list)
+        # Common technical skills database
         self.skills_database = {
             'python', 'java', 'javascript', 'typescript', 'c++', 'c#', 'ruby', 'go', 'rust',
             'react', 'angular', 'vue', 'django', 'flask', 'fastapi', 'spring', 'node.js', 'express',
@@ -64,14 +150,6 @@ class ResumeParser:
             'pandas', 'numpy', 'spacy', 'spark', 'hadoop', 'kafka'
         }
         
-        # Gender-indicating words to detect and anonymize
-        self.gender_indicators = {
-            'he', 'him', 'his', 'himself',
-            'she', 'her', 'hers', 'herself',
-            'mr', 'mrs', 'ms', 'miss', 'mr.', 'mrs.', 'ms.',
-            'male', 'female', 'man', 'woman', 'gentleman', 'lady'
-        }
-        
         # Section headers to look for
         self.section_headers = {
             'experience': ['experience', 'work experience', 'employment', 'professional experience'],
@@ -80,10 +158,10 @@ class ResumeParser:
             'summary': ['summary', 'profile', 'professional summary', 'about']
         }
     
-    def extract_text(self, pdf_path: str) -> str:
+    def extract_text(self) -> str:
         """Extract text from PDF"""
         try:
-            with pdfplumber.open(pdf_path) as pdf:
+            with pdfplumber.open(self.pdf_path) as pdf:
                 text = ""
                 for page in pdf.pages:
                     page_text = page.extract_text()
@@ -94,11 +172,22 @@ class ResumeParser:
             raise Exception(f"Error reading PDF: {e}")
     
     def clean_text(self, text: str) -> str:
-        """Clean extracted text"""
-        # Remove bullets
+        """Clean extracted text - remove bullets and special characters"""
+        # Remove common bullet points and special characters
         text = re.sub(r'[●•◆▪▸➤⦿✓✔]', '', text)
+        
+        # Remove Unicode bullet characters like \u25cf
+        text = re.sub(r'[\u25cf\u25cb\u25aa\u25ab\u2022\u2023\u2043\u204c\u204d\u2219\u25e6]', '', text)
+        
+        # Remove other common special characters but keep useful punctuation
+        text = re.sub(r'[^\w\s.,;:!?()\-@/#$%&+="\'<>\n]', '', text)
+        
         # Normalize whitespace
         text = re.sub(r'\s+', ' ', text)
+        
+        # Clean up multiple newlines
+        text = re.sub(r'\n\s*\n', '\n', text)
+        
         return text.strip()
     
     def extract_email(self, text: str) -> Optional[str]:
@@ -109,7 +198,6 @@ class ResumeParser:
     
     def extract_phone(self, text: str) -> Optional[str]:
         """Extract phone number"""
-        # Common formats: (123) 456-7890, 123-456-7890, 123.456.7890
         patterns = [
             r'\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}',
             r'\+?\d{1,3}[-.\s]?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}'
@@ -132,7 +220,7 @@ class ResumeParser:
                 return first_line
         
         # Fallback: use spaCy NER
-        doc = self.nlp(text[:500])  # Check first 500 chars
+        doc = self.nlp(text[:500])
         for ent in doc.ents:
             if ent.label_ == "PERSON":
                 return ent.text
@@ -189,9 +277,6 @@ class ResumeParser:
             return []
         
         experiences = []
-        doc = self.nlp(experience_text)
-        
-        # Split by job entries (look for date patterns as separators)
         lines = experience_text.split('\n')
         current_job = {}
         
@@ -250,102 +335,10 @@ class ResumeParser:
         
         return education_entries
     
-    def generate_candidate_id(self, name: str = None, email: str = None) -> str:
-        """Generate a unique anonymous ID for the candidate"""
-        # Use name/email for consistent ID generation, or random if not available
-        if name or email:
-            identifier = f"{name or ''}{email or ''}"
-            # Create hash for anonymity
-            hash_obj = hashlib.sha256(identifier.encode())
-            hash_hex = hash_obj.hexdigest()[:12]  # Use first 12 chars
-            return f"CANDIDATE-{hash_hex.upper()}"
-        else:
-            # Generate random ID
-            random_id = ''.join(random.choices('0123456789ABCDEF', k=12))
-            return f"CANDIDATE-{random_id}"
-    
-    def anonymize_text(self, text: str) -> str:
-        """Remove or replace personal information from text"""
-        if not text:
-            return text
-        
-        doc = self.nlp(text)
-        anonymized = text
-        
-        # Replace person names with [REDACTED]
-        for ent in reversed(doc.ents):  # Reverse to maintain positions
-            if ent.label_ == "PERSON":
-                anonymized = (
-                    anonymized[:ent.start_char] + 
-                    "[REDACTED]" + 
-                    anonymized[ent.end_char:]
-                )
-        
-        # Remove gender indicators
-        words = anonymized.split()
-        anonymized_words = []
-        for word in words:
-            word_lower = word.lower().strip('.,!?;:')
-            if word_lower not in self.gender_indicators:
-                anonymized_words.append(word)
-            else:
-                anonymized_words.append('[REDACTED]')
-        
-        return ' '.join(anonymized_words)
-    
-    def anonymize_location(self, location: str) -> str:
-        """Generalize location to city/state level only"""
-        if not location:
-            return None
-        
-        # Remove street addresses, zip codes
-        # Keep only city and state
-        location = re.sub(r'\d{5}(-\d{4})?', '', location)  # Remove ZIP
-        location = re.sub(r'\d+\s+\w+\s+(street|st|avenue|ave|road|rd|boulevard|blvd|lane|ln|drive|dr)', '', location, flags=re.IGNORECASE)
-        
-        return location.strip()
-    
-    def anonymize_resume_data(self, resume: ResumeData) -> ResumeData:
-        """Anonymize all personal information in resume data"""
-        
-        # Generate anonymous candidate ID
-        resume.candidate_id = self.generate_candidate_id(resume.name, resume.email)
-        
-        # Remove direct identifiers
-        original_name = resume.name
-        resume.name = None
-        resume.email = None
-        resume.phone = None
-        
-        # Generalize location (keep city/state, remove address)
-        if resume.location:
-            resume.location = self.anonymize_location(resume.location)
-        
-        # Anonymize summary text
-        if resume.summary:
-            resume.summary = self.anonymize_text(resume.summary)
-        
-        # Anonymize experience descriptions
-        for exp in resume.experience:
-            if 'responsibilities' in exp:
-                exp['responsibilities'] = [
-                    self.anonymize_text(resp) for resp in exp['responsibilities']
-                ]
-        
-        # Mark as anonymized
-        resume.anonymized = True
-        
-        return resume
-    
-    def parse(self, anonymize: bool = False) -> ResumeData:
-        """Main parsing function - extract all data from resume
-        
-        Args:
-            pdf_path: Path to PDF file
-            anonymize: If True, remove personal identifying information
-        """
+    def parse(self) -> ResumeData:
+        """Main parsing function - extract all data from resume"""
         # Extract and clean text
-        raw_text = self.extract_text(self.pdf_path)
+        raw_text = self.extract_text()
         cleaned_text = self.clean_text(raw_text)
         
         # Initialize resume data
@@ -366,7 +359,7 @@ class ResumeParser:
         # Extract sections
         summary_text = self.find_section(raw_text, 'summary')
         if summary_text:
-            resume.summary = summary_text[:500]  # Limit length
+            resume.summary = summary_text[:500]
         
         # Extract skills
         resume.skills = self.extract_skills(cleaned_text)
@@ -379,8 +372,4 @@ class ResumeParser:
         education_text = self.find_section(raw_text, 'education')
         resume.education = self.parse_education_section(education_text)
         
-        # Anonymize if requested
-        if anonymize:
-            resume = self.anonymize_resume_data(resume)
-        
-        return resume.to_json()
+        return resume
