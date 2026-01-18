@@ -1,35 +1,60 @@
 import { useState } from 'react'
 
 function Login({ onLoginSuccess }) {
-    const [username, setUsername] = useState('')
+    const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
+    const [isSignUp, setIsSignUp] = useState(false)
 
-    const handleLogin = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault()
         setError('')
         setLoading(true)
 
-        if (!username || !password) {
+        if (!email || !password) {
             setError('Please fill in all fields')
             setLoading(false)
             return
         }
 
-        // Hardcoded login check
-        if (username === 'johndoe' && password === 'Password1') {
-            const userData = {
-                id: 'user-001',
-                username: username,
-                email: 'johndoe@example.com',
-                skills: 'React, JavaScript, TypeScript, Node.js',
-                experience: 'Senior software engineer with 8+ years of experience building scalable applications.',
-                education: 'B.S. Computer Science'
+        try {
+            const endpoint = isSignUp ? '/api/auth/sign-up' : '/api/auth/sign-in'
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            })
+
+            const data = await response.json()
+
+            if (!response.ok) {
+                setError(data.detail || 'Authentication failed')
+                setLoading(false)
+                return
             }
-            onLoginSuccess(userData)
-        } else {
-            setError('Invalid username or password. Try: johndoe / Password1')
+
+            // Fetch full user profile
+            const userResponse = await fetch(`/api/users/${data.user_id}`)
+            if (userResponse.ok) {
+                const userData = await userResponse.json()
+                onLoginSuccess({
+                    ...userData,
+                    email: data.email
+                })
+            } else {
+                // If user profile doesn't exist yet (new sign up)
+                onLoginSuccess({
+                    id: data.user_id,
+                    email: data.email,
+                    skills: '',
+                    experience: '',
+                    education: ''
+                })
+            }
+        } catch (error) {
+            console.error('Auth error:', error)
+            setError('Failed to connect to server')
         }
         setLoading(false)
     }
@@ -42,15 +67,15 @@ function Login({ onLoginSuccess }) {
                     <p className="loginSubtitle">Fair Job Matching Platform</p>
                 </div>
 
-                <form className="loginForm" onSubmit={handleLogin}>
+                <form className="loginForm" onSubmit={handleSubmit}>
                     <div className="formGroup">
-                        <label htmlFor="username">Username</label>
+                        <label htmlFor="email">Email</label>
                         <input
-                            id="username"
-                            type="text"
-                            placeholder="Enter your username"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
+                            id="email"
+                            type="email"
+                            placeholder="Enter your email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                             className="formInput"
                             disabled={loading}
                         />
@@ -78,18 +103,37 @@ function Login({ onLoginSuccess }) {
                     >
                         {loading ? (
                             <>
-                                <i className="fa-solid fa-spinner fa-spin"></i> Logging in...
+                                <i className="fa-solid fa-spinner fa-spin"></i> {isSignUp ? 'Creating account...' : 'Logging in...'}
                             </>
                         ) : (
                             <>
-                                <i className="fa-solid fa-sign-in-alt"></i> Login
+                                <i className={`fa-solid ${isSignUp ? 'fa-user-plus' : 'fa-sign-in-alt'}`}></i> {isSignUp ? 'Sign Up' : 'Login'}
                             </>
                         )}
                     </button>
                 </form>
 
                 <div className="loginFooter">
-                    <p>Demo credentials: Use any username/password for testing</p>
+                    <p>
+                        {isSignUp ? 'Already have an account?' : "Don't have an account?"}
+                        <button
+                            type="button"
+                            onClick={() => setIsSignUp(!isSignUp)}
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                color: 'var(--primary-blue)',
+                                cursor: 'pointer',
+                                marginLeft: '4px',
+                                fontWeight: '600'
+                            }}
+                        >
+                            {isSignUp ? 'Login' : 'Sign Up'}
+                        </button>
+                    </p>
+                    <p style={{ marginTop: '8px', fontSize: '11px' }}>
+                        Demo: test@example.com / password123
+                    </p>
                 </div>
             </div>
         </div>

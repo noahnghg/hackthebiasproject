@@ -170,8 +170,14 @@ function Jobs({ currentUser }) {
             return
         }
 
+        if (!currentUser?.id) {
+            alert('Please log in to post a job')
+            return
+        }
+
         try {
-            const response = await fetch('/api/jobs/', {
+            // Using the nested route: POST /users/{user_id}/jobs
+            const response = await fetch(`/api/users/${currentUser.id}/jobs`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newJobForm)

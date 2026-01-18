@@ -49,9 +49,9 @@ function App() {
     return (
         <>
             <main>
-                <Sidebar 
-                    onNavigate={setActiveRoute} 
-                    activeIndex={activeRoute} 
+                <Sidebar
+                    onNavigate={setActiveRoute}
+                    activeIndex={activeRoute}
                     onLogout={handleLogout}
                     currentUser={currentUser}
                 />
@@ -62,8 +62,8 @@ function App() {
                     >
                         <Jobs currentUser={currentUser} />
                         <Profile currentUser={currentUser} setCurrentUser={setCurrentUser} />
-                        <Applications currentUser={currentUser} />
-                        <TrackPostings currentUser={currentUser} />
+                        <Applications currentUser={currentUser} isActive={activeRoute === 2} />
+                        <TrackPostings currentUser={currentUser} isActive={activeRoute === 3} />
                     </div>
                 </div>
             </main>

@@ -1,21 +1,22 @@
 import { useState, useEffect } from 'react'
 
-function Applications({ currentUser }) {
+function Applications({ currentUser, isActive }) {
     const [applications, setApplications] = useState([])
     const [selectedApp, setSelectedApp] = useState(null)
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        if (currentUser?.id) {
+        // Refetch when component becomes active or user changes
+        if (currentUser?.id && isActive) {
             fetchApplications()
-        } else {
+        } else if (!currentUser) {
             setLoading(false)
         }
-    }, [currentUser])
+    }, [currentUser, isActive])
 
     const fetchApplications = async () => {
         try {
-            const response = await fetch(`/api/applications/${currentUser.id}`)
+            const response = await fetch(`/api/applications/user/${currentUser.id}`)
             if (response.ok) {
                 const data = await response.json()
                 setApplications(data)

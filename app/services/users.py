@@ -2,7 +2,7 @@
 User service to store and manage user profiles in database
 """
 from typing import Optional
-from core.database import User, add_user, get_user
+from core.database import User, add_user, get_user, get_user_by_email
 from sqlmodel import Session
 from core.database import engine
 
@@ -22,6 +22,11 @@ class UserService:
     def get_user_by_id(user_id: str) -> Optional[User]:
         """Get user by ID."""
         return get_user(user_id)
+
+    @staticmethod 
+    def get_user_by_email(email: str) -> Optional[User]:
+        """Get user by email."""
+        return get_user_email(email)
 
     @staticmethod
     def create_or_update_user(user_id: str, skills: str, experience: str, education: str) -> User:

@@ -3,6 +3,8 @@ from pydantic import BaseModel
 from typing import Optional
 from app.services.resume import ResumeService
 from app.services.users import UserService
+from app.services.job import JobService 
+from models.job import JobCreate
 
 router = APIRouter(
     prefix="/users",
@@ -57,3 +59,13 @@ async def get_user(user_id: str):
         "experience": user.experience,
         "education": user.education
     }
+
+@router.post("/{user_id}/jobs")
+async def create_job_for_user(user_id: str, job: JobCreate):
+    """Create a new job posting for a user."""
+    return JobService.create_job(user_id, job)
+
+@router.get("/{user_id}/jobs")
+async def get_jobs_by_user(user_id: str):
+    """Get all jobs posted by a user."""
+    return JobService.get_jobs_by_user(user_id)

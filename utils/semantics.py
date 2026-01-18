@@ -1,33 +1,60 @@
-from sentence_transformers import SentenceTransformer, CrossEncoder, util
+from sentence_transformers import SentenceTransformer, util
 import torch
-import spacy
 import numpy as np
+import spacy
+import re
 
 class SemanticMatcher:
-    def __init__(self, bi_encoder_name: str = 'all-MiniLM-L6-v2', cross_encoder_name: str = 'cross-encoder/ms-marco-MiniLM-L-6-v2', spacy_model: str = "en_core_web_sm"):
+    def __init__(self, bi_encoder_name: str = 'all-MiniLM-L6-v2', spacy_model: str = "en_core_web_sm"):
         """
-        Initializes the models.
-        - Bi-Encoder: For fast information retrieval and generating embeddings.
-        - Cross-Encoder: For accurate scoring of sentence pairs (Job Description <-> Resume).
-        - Spacy: For Entity Extraction (Skills, Experience).
+        Initializes the semantic matcher with a bi-encoder for text similarity.
         """
         self.bi_encoder = SentenceTransformer(bi_encoder_name)
-        self.cross_encoder = CrossEncoder(cross_encoder_name)
+        
+        # Load spaCy for entity extraction
         try:
             self.nlp = spacy.load(spacy_model)
         except OSError:
             print(f"Spacy model '{spacy_model}' not found. Loading blank 'en' model.")
             self.nlp = spacy.blank("en")
+        
+        # Comprehensive tech skills list for keyword matching
+        self.tech_skills = {
+            # Languages
+            "python", "java", "javascript", "typescript", "go", "golang", "rust", "c++", 
+            "c#", "ruby", "php", "swift", "kotlin", "scala", "r", "matlab",
+            # Frontend
+            "react", "vue", "angular", "svelte", "html", "css", "tailwind", "bootstrap",
+            "next.js", "nextjs", "nuxt", "gatsby", "webpack", "vite",
+            # Backend
+            "node.js", "nodejs", "express", "django", "flask", "fastapi", "spring", 
+            "spring boot", "rails", "laravel", ".net", "asp.net",
+            # Databases
+            "sql", "postgresql", "postgres", "mysql", "mongodb", "redis", "elasticsearch",
+            "dynamodb", "cassandra", "sqlite", "oracle", "neo4j",
+            # Cloud & DevOps
+            "aws", "azure", "gcp", "google cloud", "docker", "kubernetes", "k8s",
+            "terraform", "ansible", "jenkins", "github actions", "gitlab", "ci/cd",
+            "linux", "unix", "bash", "shell",
+            # ML/AI
+            "machine learning", "deep learning", "tensorflow", "pytorch", "keras",
+            "scikit-learn", "sklearn", "pandas", "numpy", "nlp", "computer vision",
+            "neural network", "transformer", "bert", "gpt", "llm",
+            # Data
+            "data engineering", "etl", "spark", "airflow", "kafka", "hadoop",
+            "data pipeline", "databricks", "snowflake", "bigquery", "dbt",
+            # Other
+            "git", "agile", "scrum", "microservices", "rest", "api", "graphql",
+            "grpc", "rabbitmq", "celery", "nginx", "apache"
+        }
 
     def _extract_entities(self, text: str) -> dict:
         """
-        Extracts named entities:
-        - Skills: ORG, PRODUCT, GPE, LANGUAGE (excluding education keywords)
-        - Experience: Detailed bullet points describing work experience
-        - Education: ORG entities containing education-related keywords
+        Extracts structured entities from text:
+        - Skills: Technical skills found via keyword matching
+        - Experience: Bullet points with action verbs describing work
+        - Education: Educational institutions and degrees
         """
-        import re
-        
         doc = self.nlp(text)
         entities = {
             "skills": [],
@@ -35,49 +62,64 @@ class SemanticMatcher:
             "education": []
         }
         
-        education_keywords = {"university", "college", "school", "institute", "academy", "bachelor", "master", "phd", "degree"}
-        experience_keywords = {"engineered", "developed", "built", "created", "implemented", "designed", 
-                              "managed", "led", "architected", "reduced", "increased", "improved",
-                              "optimized", "deployed", "automated", "integrated", "processed"}
+        text_lower = text.lower()
+        
+        # Extract skills via keyword matching (more reliable than NER for tech terms)
+        for skill in self.tech_skills:
+            if skill in text_lower:
+                entities["skills"].append(skill)
+        
+        # Education keywords for filtering
+        education_keywords = {"university", "college", "school", "institute", "academy", 
+                            "bachelor", "master", "phd", "degree", "bs", "ms", "ba", "ma"}
+        
+        # Experience action verbs
+        experience_keywords = {"engineered", "developed", "built", "created", "implemented", 
+                             "designed", "managed", "led", "architected", "reduced", 
+                             "increased", "improved", "optimized", "deployed", "automated", 
+                             "integrated", "processed", "achieved", "delivered", "launched"}
         
         # Patterns to filter out
-        url_pattern = re.compile(r'https?://|www\.|\.com|\.org|\.io|linkedin|github|gmail')
-        email_pattern = re.compile(r'@|\[EMAIL REDACTED\]')
-        header_pattern = re.compile(r'^(Education|Experience|Projects|Skills|Summary|Contact)$', re.IGNORECASE)
+        url_pattern = re.compile(r'https?://|www\.|\\.com|\\.org|\\.io|linkedin|github|gmail')
+        email_pattern = re.compile(r'@|\\[EMAIL REDACTED\\]')
         
-        # Extract skills and education from NER
+        # Extract education from NER (ORG entities with education keywords)
         for ent in doc.ents:
-            text_lower = ent.text.lower()
-            if ent.label_ in ["ORG", "PRODUCT", "WORK_OF_ART", "GPE", "LANGUAGE"]:
-                if any(keyword in text_lower for keyword in education_keywords):
+            ent_lower = ent.text.lower()
+            if ent.label_ == "ORG":
+                if any(kw in ent_lower for kw in education_keywords):
                     entities["education"].append(ent.text)
-                else:
-                    entities["skills"].append(ent.text)
         
-        # Extract detailed experience bullet points
-        sentences = list(doc.sents)
-        for sent in sentences:
+        # Also check sentences for education-related content
+        for sent in doc.sents:
+            sent_lower = sent.text.lower()
+            if any(kw in sent_lower for kw in education_keywords):
+                if not url_pattern.search(sent.text) and not email_pattern.search(sent.text):
+                    # Check if it's a meaningful education sentence
+                    if len(sent.text) > 20 and len(sent.text) < 200:
+                        entities["education"].append(sent.text.strip())
+        
+        # Extract experience bullet points
+        for sent in doc.sents:
             sent_text = sent.text.strip()
             sent_lower = sent_text.lower()
             
-            # Skip if contains URL, email, or is a header
+            # Skip URLs, emails, headers
             if url_pattern.search(sent_text):
                 continue
             if email_pattern.search(sent_text):
                 continue
-            if header_pattern.match(sent_text.strip()):
+            if sent_text in ["Education", "Experience", "Projects", "Skills", "Summary", "Contact"]:
                 continue
             
-            # Only include actual bullet points with action verbs
-            has_action_verb = any(keyword in sent_lower for keyword in experience_keywords)
-            starts_with_bullet = sent_text.startswith('•') or sent_text.startswith('-')
+            # Include sentences with action verbs that describe accomplishments
+            has_action_verb = any(kw in sent_lower for kw in experience_keywords)
             
             if has_action_verb and len(sent_text) > 30:
-                # Clean up the text
                 clean_text = sent_text.lstrip('•-').strip()
                 entities["experience"].append(clean_text)
         
-        # Remove duplicates
+        # Remove duplicates while preserving order
         entities["skills"] = list(dict.fromkeys(entities["skills"]))
         entities["experience"] = list(dict.fromkeys(entities["experience"]))
         entities["education"] = list(dict.fromkeys(entities["education"]))
@@ -87,78 +129,103 @@ class SemanticMatcher:
 
     def compute_similarity(self, text1: str, text2: str) -> float:
         """
-        Computes the cosine similarity between two texts using the Bi-Encoder.
-        Good for fast filtering.
+        Computes cosine similarity between two texts using sentence embeddings.
         """
+        if not text1.strip() or not text2.strip():
+            return 0.0
         embeddings = self.bi_encoder.encode([text1, text2], convert_to_tensor=True)
-        cosine_scores = util.cos_sim(embeddings[0], embeddings[1])
-        return float(cosine_scores[0][0])
+        cosine_score = util.cos_sim(embeddings[0], embeddings[1])
+        return float(cosine_score[0][0])
 
-    def evaluate_match(self, job_description: str, resume_text: str) -> float:
+    def extract_skills(self, text: str) -> set:
         """
-        Evaluates the relevance using the Cross-Encoder.
-        Returns a normalized score (0 to 1) using sigmoid.
+        Extracts tech skills from text using keyword matching.
+        More reliable than NER for technical terms.
         """
-        logits = self.cross_encoder.predict([(job_description, resume_text)])
-        # Apply sigmoid to convert logits to probability/score 0-1
-        score = 1 / (1 + np.exp(-logits[0]))
-        return float(score)
+        text_lower = text.lower()
+        found_skills = set()
+        for skill in self.tech_skills:
+            if skill in text_lower:
+                found_skills.add(skill)
+        return found_skills
 
-    def compute_entity_weighted_score(self, job_description: str, resume_text: str) -> float:
+    def compute_skill_match(self, job_text: str, resume_text: str) -> float:
         """
-        Calculates a semantic similarity score focused on extracted entities.
-        Weights: Skills (0.4), Experience (0.5), Education (0.1).
+        Computes skill overlap ratio between job requirements and resume.
+        Returns percentage of required skills that the candidate has.
         """
-        jd_ents = self._extract_entities(job_description)
-        res_ents = self._extract_entities(resume_text)
-
-        # Convert entity lists back to specific strings for embedding comparison
-        jd_skills_text = " ".join(jd_ents["skills"])
-        res_skills_text = " ".join(res_ents["skills"])
+        job_skills = self.extract_skills(job_text)
+        resume_skills = self.extract_skills(resume_text)
         
-        jd_exp_text = " ".join(jd_ents["experience"])
-        res_exp_text = " ".join(res_ents["experience"])
+        if not job_skills:
+            return 0.5  # Neutral if no skills detected in job
         
-        jd_edu_text = " ".join(jd_ents["education"])
-        res_edu_text = " ".join(res_ents["education"])
-
-        # Calculate Similarity for Skills (Weight: 0.4)
-        if jd_skills_text and res_skills_text:
-            skills_sim = self.compute_similarity(jd_skills_text, res_skills_text)
-        else:
-            skills_sim = 0.0
-
-        # Calculate Similarity for Experience (Weight: 0.5)
-        if jd_exp_text and res_exp_text:
-            exp_sim = self.compute_similarity(jd_exp_text, res_exp_text)
-        else:
-            exp_sim = 0.0
-
-        # Calculate Similarity for Education (Weight: 0.1)
-        if jd_edu_text and res_edu_text:
-            edu_sim = self.compute_similarity(jd_edu_text, res_edu_text)
-        else:
-            edu_sim = 0.0
-
-        return (0.4 * skills_sim) + (0.5 * exp_sim) + (0.1 * edu_sim)
+        matching_skills = job_skills.intersection(resume_skills)
+        match_ratio = len(matching_skills) / len(job_skills)
+        
+        return match_ratio
 
     def get_final_score(self, job_description: str, resume_text: str) -> float:
         """
-        Combines Cross-Encoder Score and Entity-Weighted Score for a final robust metric.
+        Computes the final match score between a job and resume.
+        
+        Uses three signals:
+        1. Semantic similarity (30%) - Overall text meaning match
+        2. Skill match (50%) - Explicit skill keyword overlap
+        3. Context boost (20%) - Bonus for semantic similarity of skill contexts
+        
+        Returns a score from 0 to 1, scaled for intuitive interpretation.
         """
-        # 1. Nuanced semantic match (Cross-Encoder)
-        ce_score = self.evaluate_match(job_description, resume_text)
+        # 1. Direct semantic similarity
+        semantic_sim = self.compute_similarity(job_description, resume_text)
         
-        # 2. Entity-focused match (Hard Skills & Experience)
-        entity_score = self.compute_entity_weighted_score(job_description, resume_text)
+        # 2. Skill keyword match (most important for job matching)
+        skill_match = self.compute_skill_match(job_description, resume_text)
         
-        # Final Weighted Score (Adjust weights as needed)
-        # We give slight preference to the deep semantic textual match of the Cross-Encoder
-        final_score = (0.6 * ce_score) + (0.4 * entity_score)
+        # 3. Context matching - compare the semantic meaning around skills
+        job_skills = self.extract_skills(job_description)
+        resume_skills = self.extract_skills(resume_text)
         
-        return final_score
+        if job_skills and resume_skills:
+            # Create skill-focused text snippets
+            job_skill_text = " ".join(job_skills)
+            resume_skill_text = " ".join(resume_skills)
+            context_sim = self.compute_similarity(job_skill_text, resume_skill_text)
+        else:
+            context_sim = semantic_sim  # Fallback to overall similarity
+        
+        # Raw weighted score
+        # Skill match is weighted heavily as it's the most reliable signal
+        raw_score = (0.30 * semantic_sim) + (0.50 * skill_match) + (0.20 * context_sim)
+        
+        # Scale the score to an intuitive range
+        # Cosine similarity for related texts is typically 0.3-0.6
+        # We want a "good match" (60%+ skill overlap) to show as 70%+
+        # 
+        # Apply a scaling transformation:
+        # - Minimum realistic score: ~0.15 (unrelated)
+        # - Maximum realistic score: ~0.85 (perfect match)
+        # - We scale this to 0.20-0.95 range for better UX
+        
+        # If skill match is high, boost the score
+        if skill_match >= 0.7:
+            # Strong skill match - candidate has most required skills
+            scaled_score = 0.70 + (raw_score * 0.30)
+        elif skill_match >= 0.5:
+            # Moderate skill match
+            scaled_score = 0.50 + (raw_score * 0.40)
+        elif skill_match >= 0.3:
+            # Some skill overlap
+            scaled_score = 0.35 + (raw_score * 0.45)
+        else:
+            # Limited skill overlap - rely more on semantic similarity
+            scaled_score = raw_score * 1.2  # Slight boost for semantic component
+        
+        # Ensure score is in valid range
+        final_score = max(0.15, min(0.95, scaled_score))
+        
+        return round(final_score, 3)
 
-    
 
 # Singleton instance
 semantics_instance = SemanticMatcher()
