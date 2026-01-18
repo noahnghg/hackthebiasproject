@@ -12,23 +12,7 @@ function App() {
     const [currentUser, setCurrentUser] = useState(null)
     const [isLoggedIn, setIsLoggedIn] = useState(false)
 
-    useEffect(() => {
-        // Check if user exists (for demo, using test-user-001)
-        checkUser()
-    }, [])
 
-    const checkUser = async () => {
-        try {
-            const response = await fetch('/api/users/test-user-001')
-            if (response.ok) {
-                const data = await response.json()
-                setCurrentUser(data)
-                setIsLoggedIn(true)
-            }
-        } catch (error) {
-            console.log('No existing user found')
-        }
-    }
 
     const handleLoginSuccess = (userData) => {
         setCurrentUser(userData)

@@ -64,7 +64,7 @@ function Login({ onLoginSuccess }) {
         <div className="loginContainer">
             <div className="loginCard">
                 <div className="loginHeader">
-                    <h1 className="loginTitle">HRight</h1>
+                    <h1 className="loginTitle">BMATS</h1>
                     <p className="loginSubtitle">Fair Job Matching Platform</p>
                 </div>
 
