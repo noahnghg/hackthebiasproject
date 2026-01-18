@@ -6,7 +6,10 @@ function TrackPostings({ currentUser }) {
         {
             id: 1,
             title: 'Senior React Developer',
-            description: 'Build scalable web applications using React and modern JavaScript',
+            company: 'Tech Innovations Inc',
+            shortDescription: 'Build scalable web applications using React and modern JavaScript',
+            description: 'We are seeking an experienced Senior React Developer to join our growing team. You will be responsible for building and maintaining scalable web applications using React, modern JavaScript frameworks, and industry best practices. This is a fantastic opportunity to work with cutting-edge technologies and collaborate with a talented team of engineers.',
+            requirements: 'Required: 5+ years of experience with React, JavaScript/TypeScript, RESTful APIs, Git version control, CSS and responsive design. Desired: Experience with Next.js, Redux, Testing libraries (Jest, React Testing Library), CI/CD pipelines, and Agile methodologies.',
             applicationCount: 12,
             expanded: false,
             applicants: [
@@ -19,7 +22,10 @@ function TrackPostings({ currentUser }) {
         {
             id: 2,
             title: 'Full Stack Developer',
-            description: 'Develop end-to-end solutions with React, Node.js, and MongoDB',
+            company: 'Digital Solutions Ltd',
+            shortDescription: 'Develop end-to-end solutions with React, Node.js, and MongoDB',
+            description: 'Join our dynamic team as a Full Stack Developer. You will develop complete end-to-end solutions for our web applications using modern technologies including React for the frontend and Node.js for the backend. You will work on building robust APIs, designing databases with MongoDB, and ensuring excellent user experiences.',
+            requirements: 'Required: 3+ years of full-stack development experience, Proficiency in React and Node.js, MongoDB or similar NoSQL databases, RESTful API design. Desired: Experience with GraphQL, Docker, Kubernetes, AWS, and Microservices architecture.',
             applicationCount: 8,
             expanded: false,
             applicants: [
@@ -134,10 +140,27 @@ function TrackPostings({ currentUser }) {
                             className="jobPostHeader"
                             onClick={() => toggleJobExpanded(job.id)}
                         >
-                            <div className="jobPostInfo">
-                                <h3 className="jobPostTitle">{job.title}</h3>
-                                <p className="jobPostDesc">{job.description}</p>
-                            </div>
+                            {job.expanded ? (
+                                <div className="jobPostInfo expanded">
+                                    <div className="jobPostTitleGroup">
+                                        <h3 className="jobPostTitle">{job.title}</h3>
+                                        <p className="jobPostCompany">{job.company}</p>
+                                    </div>
+                                    <div className="jobDescriptionSection">
+                                        <h4 className="sectionLabel">Job Description</h4>
+                                        <p className="jobDescription">{job.description}</p>
+                                    </div>
+                                    <div className="jobRequirementsSection">
+                                        <h4 className="sectionLabel">Requirements</h4>
+                                        <p className="jobRequirements">{job.requirements}</p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="jobPostInfo collapsed">
+                                    <h3 className="jobPostTitle">{job.title}</h3>
+                                    <p className="jobPostSubtitle">{job.company}</p>
+                                </div>
+                            )}
                             <div className="jobPostStats">
                                 <div className="appBadge">
                                     <i className="fa-solid fa-users"></i>

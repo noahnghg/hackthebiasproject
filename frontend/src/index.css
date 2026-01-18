@@ -4,19 +4,19 @@
 
 /* CSS Variables - Design Tokens */
 :root {
-    /* Primary Palette */
-    --primary-blue: #3B82F6;
-    --dark-navy: #1E293B;
-    --success-green: #10B981;
+    /* Primary Palette - Modern Black & Teal Theme */
+    --primary-blue: #148f6f;
+    --dark-navy: #FFFFFF;
+    --success-green: #148f6f;
     --warning-amber: #F59E0B;
-    --alert-red: #EF4444;
+    --alert-red: #FF6B6B;
 
-    /* Neutrals */
-    --bg-color: #F8FAFC;
-    --card-bg: #FFFFFF;
-    --border-color: #E2E8F0;
-    --text-secondary: #64748B;
-    --profile-bg: #EFF6FF;
+    /* Neutrals - Dark Mode with Teal Accents */
+    --bg-color: #000000;
+    --card-bg: #222222;
+    --border-color: #3A3A3A;
+    --text-secondary: #B8B8B8;
+    --profile-bg: #1A3A33;
 
     /* Typography */
     --font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -34,8 +34,8 @@
     --radius-lg: 12px;
 
     /* Shadows */
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-sm: 0 1px 3px rgba(29, 205, 159, 0.1);
+    --shadow-md: 0 4px 6px rgba(29, 205, 159, 0.15);
 }
 
 /* Reset & Base */
@@ -109,7 +109,7 @@ aside {
 .userProfilePic {
     width: 64px;
     height: 64px;
-    background: linear-gradient(135deg, var(--primary-blue), #60A5FA);
+    background: linear-gradient(135deg, #148f6f, #0f6652);
     border-radius: 50%;
     margin-bottom: var(--space-sm);
     display: flex;
@@ -117,12 +117,6 @@ aside {
     justify-content: center;
     color: white;
     font-size: 24px;
-}
-
-.userName {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--dark-navy);
 }
 
 /* Navigation */
@@ -235,11 +229,13 @@ aside {
 .searchForm input {
     width: 55%;
     padding: var(--space-sm) var(--space-md);
-    border: 1px solid var(--border-color);
+    border: 1px solid white;
     border-radius: var(--radius-md);
     font-size: 16px;
     font-family: var(--font-family);
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    background-color: var(--card-bg);
+    color: white;
 }
 
 .searchForm input:focus {
@@ -304,12 +300,13 @@ aside {
 .formInput,
 .formTextarea {
     padding: var(--space-sm) var(--space-md);
-    border: 1px solid var(--border-color);
+    border: 1px solid white;
     border-radius: var(--radius-md);
     font-size: 14px;
     font-family: var(--font-family);
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    color: var(--dark-navy);
+    color: white;
+    background-color: var(--card-bg);
 }
 
 .formInput:focus,
@@ -536,9 +533,7 @@ aside {
 .skillPill {
     display: inline-block;
     padding: 6px 14px;
-    background: linear-gradient(135deg, var(--primary-blue), #60A5FA);
-    color: white;
-    border-radius: 20px;
+    background: linear-gradient(135deg, #148f6f, #148f6f);
     font-size: 13px;
     font-weight: 500;
 }
@@ -793,13 +788,7 @@ aside {
 .profileAvatar {
     width: 80px;
     height: 80px;
-    background: linear-gradient(135deg, var(--primary-blue), #60A5FA);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 32px;
+    background: linear-gradient(135deg, #148f6f, #148f6f);
 }
 
 .profileDetails h2 {
@@ -977,7 +966,7 @@ aside {
 /* Score Details Panel */
 .scoreSection {
     flex: 0.4;
-    background: #F1F5F9;
+    background: #2A2A2A;
     border-radius: var(--radius-lg);
     padding: var(--space-lg);
 }
@@ -1368,7 +1357,7 @@ aside {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, var(--profile-bg) 0%, #DBEAFE 100%);
+    background: linear-gradient(135deg, #000000 0%, #1A1A1A 100%);
 }
 
 .loginCard {
@@ -1451,9 +1440,7 @@ aside {
 
 .loginBtn {
     padding: var(--space-sm) var(--space-lg);
-    background: linear-gradient(135deg, var(--primary-blue), #0ea5e9);
-    color: white;
-    border: none;
+    background: linear-gradient(135deg, #148f6f, #148f6f);
     border-radius: var(--radius-md);
     font-size: 16px;
     font-weight: 600;
@@ -1520,7 +1507,7 @@ aside {
 .jobPostHeader {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     padding: var(--space-lg);
     cursor: pointer;
     transition: background-color 0.2s ease;
@@ -1534,17 +1521,70 @@ aside {
     flex: 1;
 }
 
+.jobPostInfo.collapsed {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.jobPostInfo.expanded {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.jobPostTitleGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
 .jobPostTitle {
     font-size: 18px;
     font-weight: 600;
     color: var(--dark-navy);
-    margin-bottom: 4px;
+    margin: 0;
+}
+
+.jobPostSubtitle,
+.jobPostCompany {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0;
 }
 
 .jobPostDesc {
     font-size: 14px;
     color: var(--text-secondary);
     margin: 0;
+}
+
+.jobDescriptionSection,
+.jobRequirementsSection {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.sectionLabel {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary-blue);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0;
+}
+
+.jobDescription,
+.jobRequirements {
+    font-size: 14px;
+    color: var(--dark-navy);
+    line-height: 1.5;
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 
 .jobPostStats {
@@ -1611,13 +1651,13 @@ aside {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary-blue), #0ea5e9);
+    background: linear-gradient(135deg, #148f6f, #148f6f);
+    font-size: 18px;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 18px;
-    flex-shrink: 0;
 }
 
 .applicantLabel {
