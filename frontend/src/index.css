@@ -189,7 +189,7 @@ aside {
 }
 
 .routes {
-    width: 300%;
+    width: 400%;
     height: 100%;
     display: flex;
     transition: transform 0.3s ease;
@@ -228,12 +228,12 @@ aside {
 
 /* Search */
 .searchForm {
-    margin-bottom: var(--space-lg);
+    margin-bottom: 0;
+    flex: 1;
 }
 
 .searchForm input {
-    width: 100%;
-    max-width: 500px;
+    width: 55%;
     padding: var(--space-sm) var(--space-md);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
@@ -250,6 +250,91 @@ aside {
 
 .searchForm input::placeholder {
     color: var(--text-secondary);
+}
+
+/* Job Functionality Wrapper */
+.jobFunctionalityWrapper {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+
+.addJobBtn {
+    padding: var(--space-sm) var(--space-lg);
+    background-color: var(--success-green);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    white-space: nowrap;
+}
+
+.addJobBtn:hover {
+    background-color: #059669;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    transform: translateY(-2px);
+}
+
+/* Job Form Styles */
+.jobFormContent {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.formGroup label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--dark-navy);
+}
+
+.formInput,
+.formTextarea {
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-family: var(--font-family);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    color: var(--dark-navy);
+}
+
+.formInput:focus,
+.formTextarea:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.formTextarea {
+    resize: vertical;
+    font-family: var(--font-family);
+}
+
+.formActions {
+    display: flex;
+    gap: var(--space-md);
+    justify-content: flex-end;
+    margin-top: var(--space-md);
+}
+
+.formActions .btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
 }
 
 /* Job Listings Grid */
@@ -1017,6 +1102,82 @@ aside {
     color: white;
 }
 
+.btn-alert {
+    background-color: var(--alert-red);
+    color: white;
+}
+
+.btn-alert:hover {
+    background-color: #dc2626;
+}
+
+/* ==========================================
+   Confirmation Modal
+   ========================================== */
+
+.confirmModalWrapper {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.confirmModalWrapper.active {
+    display: flex;
+}
+
+.confirmModalContent {
+    background: var(--card-bg);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+}
+
+.confirmModalHeader {
+    margin-bottom: var(--space-lg);
+}
+
+.confirmModalTitle {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--dark-navy);
+    margin: 0;
+}
+
+.confirmModalBody {
+    margin-bottom: var(--space-lg);
+}
+
+.confirmModalBody p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.6;
+}
+
+.confirmModalActions {
+    display: flex;
+    gap: var(--space-md);
+    justify-content: flex-end;
+}
+
+.confirmModalActions .btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+}
+
 /* ==========================================
    Empty States
    ========================================== */
@@ -1195,4 +1356,386 @@ aside {
     .navItem span {
         display: none;
     }
+}
+
+/* ==========================================
+   Login Page
+   ========================================== */
+
+.loginContainer {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--profile-bg) 0%, #DBEAFE 100%);
+}
+
+.loginCard {
+    background: var(--card-bg);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-color);
+}
+
+.loginHeader {
+    text-align: center;
+    margin-bottom: var(--space-xl);
+}
+
+.loginTitle {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--primary-blue);
+    margin: 0 0 8px 0;
+}
+
+.loginSubtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.loginForm {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-lg);
+}
+
+.loginForm .formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.loginForm .formGroup label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--dark-navy);
+}
+
+.loginForm .formInput {
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-family: var(--font-family);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    color: var(--dark-navy);
+}
+
+.loginForm .formInput:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.loginForm .formInput:disabled {
+    background-color: var(--bg-color);
+    cursor: not-allowed;
+}
+
+.loginError {
+    padding: var(--space-sm) var(--space-md);
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--alert-red);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    text-align: center;
+}
+
+.loginBtn {
+    padding: var(--space-sm) var(--space-lg);
+    background: linear-gradient(135deg, var(--primary-blue), #0ea5e9);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+}
+
+.loginBtn:hover:not(:disabled) {
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+    transform: translateY(-2px);
+}
+
+.loginBtn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.loginFooter {
+    text-align: center;
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--border-color);
+}
+
+.loginFooter p {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* ==========================================
+   Track Postings Route
+   ========================================== */
+
+.trackPostings.route {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    background-color: var(--bg-color);
+}
+
+.postedJobsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.postedJob {
+    background: var(--card-bg);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.2s ease;
+}
+
+.postedJob:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.jobPostHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-lg);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.jobPostHeader:hover {
+    background-color: var(--bg-color);
+}
+
+.jobPostInfo {
+    flex: 1;
+}
+
+.jobPostTitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--dark-navy);
+    margin-bottom: 4px;
+}
+
+.jobPostDesc {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.jobPostStats {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+}
+
+.appBadge {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: 6px 12px;
+    background-color: var(--profile-bg);
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--primary-blue);
+}
+
+.appBadge i {
+    font-size: 12px;
+}
+
+.jobPostStats > i {
+    color: var(--text-secondary);
+    font-size: 14px;
+    transition: transform 0.2s ease;
+}
+
+.applicantsList {
+    border-top: 1px solid var(--border-color);
+    max-height: 400px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.applicantItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-md) var(--space-lg);
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.applicantItem:last-child {
+    border-bottom: none;
+}
+
+.applicantItem:hover {
+    background-color: var(--profile-bg);
+}
+
+.applicantInfo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.applicantAvatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-blue), #0ea5e9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.applicantLabel {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--dark-navy);
+}
+
+/* ==========================================
+   Applicant Side Panel
+   ========================================== */
+
+.applicantPanelWrapper {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    z-index: 999;
+}
+
+.applicantPanelContent {
+    width: 500px;
+    height: 100%;
+    background: var(--card-bg);
+    overflow-y: auto;
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.panelClose {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-md);
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: var(--bg-color);
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: var(--text-secondary);
+    transition: background-color 0.2s ease;
+    z-index: 10;
+}
+
+.panelClose:hover {
+    background: var(--border-color);
+}
+
+.panelHeader {
+    padding: var(--space-lg);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-md);
+}
+
+.panelTitle {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--dark-navy);
+    margin: 0;
+}
+
+.panelScore {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.panelScore.high {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--success-green);
+}
+
+.panelScore.medium {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--warning-amber);
+}
+
+.panelScore.low {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--alert-red);
+}
+
+.panelBody {
+    padding: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    flex: 1;
+}
+
+.panelActions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding: var(--space-lg);
+    border-top: 1px solid var(--border-color);
+}
+
+.panelActions .btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
 }

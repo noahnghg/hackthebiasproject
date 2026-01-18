@@ -7,6 +7,13 @@ function Jobs({ currentUser }) {
     const [loading, setLoading] = useState(true)
     const [selectedJob, setSelectedJob] = useState(null)
     const [showPopup, setShowPopup] = useState(false)
+    const [showAddJobModal, setShowAddJobModal] = useState(false)
+    const [newJobForm, setNewJobForm] = useState({
+        title: '',
+        description: '',
+        requirements: '',
+        company: ''
+    })
 
     useEffect(() => {
         fetchJobs()
@@ -150,6 +157,117 @@ function Jobs({ currentUser }) {
         document.body
     )
 
+    const handleAddJobChange = (field, value) => {
+        setNewJobForm(prev => ({
+            ...prev,
+            [field]: value
+        }))
+    }
+
+    const handleSaveNewJob = async () => {
+        if (!newJobForm.title || !newJobForm.company) {
+            alert('Please fill in at least title and company')
+            return
+        }
+
+        try {
+            const response = await fetch('/api/jobs/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newJobForm)
+            })
+            const data = await response.json()
+            setJobs([...jobs, data])
+            setNewJobForm({ title: '', description: '', requirements: '', company: '' })
+            setShowAddJobModal(false)
+            alert('Job posted successfully!')
+        } catch (error) {
+            console.error('Error posting job:', error)
+            alert('Failed to post job')
+        }
+    }
+
+    const handleCancelAddJob = () => {
+        setNewJobForm({ title: '', description: '', requirements: '', company: '' })
+        setShowAddJobModal(false)
+    }
+
+    // Add Job Modal Portal
+    const addJobModal = showAddJobModal && createPortal(
+        <div className="popupWrapper active" onClick={handleCancelAddJob}>
+            <div className="popContent" onClick={(e) => e.stopPropagation()}>
+                <button className="popupClose" onClick={handleCancelAddJob}>
+                    <i className="fa-solid fa-xmark"></i>
+                </button>
+
+                <div className="popupHeader">
+                    <h2 className="popupTitle">Post a New Job</h2>
+                    <p className="popupSubtitle">Share an exciting opportunity</p>
+                </div>
+
+                <div className="jobFormContent">
+                    <div className="formGroup">
+                        <label htmlFor="jobTitle">Job Title</label>
+                        <input
+                            id="jobTitle"
+                            type="text"
+                            placeholder="e.g., Senior Developer"
+                            value={newJobForm.title}
+                            onChange={(e) => handleAddJobChange('title', e.target.value)}
+                            className="formInput"
+                        />
+                    </div>
+
+                    <div className="formGroup">
+                        <label htmlFor="company">Company</label>
+                        <input
+                            id="company"
+                            type="text"
+                            placeholder="e.g., Tech Corp"
+                            value={newJobForm.company}
+                            onChange={(e) => handleAddJobChange('company', e.target.value)}
+                            className="formInput"
+                        />
+                    </div>
+
+                    <div className="formGroup">
+                        <label htmlFor="description">Description</label>
+                        <textarea
+                            id="description"
+                            placeholder="Describe the job responsibilities and role..."
+                            value={newJobForm.description}
+                            onChange={(e) => handleAddJobChange('description', e.target.value)}
+                            className="formTextarea"
+                            rows="4"
+                        />
+                    </div>
+
+                    <div className="formGroup">
+                        <label htmlFor="requirements">Requirements</label>
+                        <textarea
+                            id="requirements"
+                            placeholder="List the requirements and qualifications..."
+                            value={newJobForm.requirements}
+                            onChange={(e) => handleAddJobChange('requirements', e.target.value)}
+                            className="formTextarea"
+                            rows="4"
+                        />
+                    </div>
+
+                    <div className="formActions">
+                        <button className="btn btn-primary" onClick={handleSaveNewJob}>
+                            <i className="fa-solid fa-check"></i> Save Job
+                        </button>
+                        <button className="btn btn-secondary" onClick={handleCancelAddJob}>
+                            <i className="fa-solid fa-times"></i> Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>,
+        document.body
+    )
+
     return (
         <div className="jobs route">
             <div className="pageHeader">
@@ -157,14 +275,19 @@ function Jobs({ currentUser }) {
                 <p className="pageSubtitle">Browse open positions and apply with your profile</p>
             </div>
 
-            <form className="searchForm" onSubmit={(e) => e.preventDefault()}>
-                <input
-                    type="search"
-                    placeholder="Search jobs by title, company, or keywords..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                />
-            </form>
+            <div className="jobFunctionalityWrapper">
+                <form className="searchForm" onSubmit={(e) => e.preventDefault()}>
+                    <input
+                        type="search"
+                        placeholder="Search jobs by title, company, or keywords..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                </form>
+                <button className="addJobBtn" onClick={() => setShowAddJobModal(true)}>
+                    <i className="fa-solid fa-plus"></i> Add Job Posting
+                </button>
+            </div>
 
             <div className="joblistingsWrapper">
                 {loading ? (
@@ -199,6 +322,7 @@ function Jobs({ currentUser }) {
             </div>
 
             {popup}
+            {addJobModal}
         </div>
     )
 }

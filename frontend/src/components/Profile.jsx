@@ -119,22 +119,6 @@ function Profile({ currentUser, setCurrentUser }) {
                                 </div>
                             )}
                         </div>
-
-                        {/* Stats Row */}
-                        <div className="profileStats">
-                            <div className="statItem">
-                                <span className="statValue">{applications.length}</span>
-                                <span className="statLabel">Applications</span>
-                            </div>
-                            <div className="statItem">
-                                <span className="statValue success">
-                                    {applications.length > 0
-                                        ? `${(Math.max(...applications.map(a => a.score)) * 100).toFixed(0)}%`
-                                        : '--'}
-                                </span>
-                                <span className="statLabel">Best Score</span>
-                            </div>
-                        </div>
                     </div>
                 ) : (
                     <div className="uploadPrompt">
@@ -149,36 +133,6 @@ function Profile({ currentUser, setCurrentUser }) {
                             <span>Upload your resume to create your profile</span>
                             <small>PDF files only</small>
                         </label>
-                    </div>
-                )}
-            </div>
-
-            {/* Applications List Section - Bottom 2/3 */}
-            <div className="applicationsPane">
-                <div className="paneHeader">
-                    <h3>Your Applications</h3>
-                    <span className="appCount">{applications.length} total</span>
-                </div>
-
-                {applications.length === 0 ? (
-                    <div className="emptyState">
-                        <i className="fa-solid fa-file-lines"></i>
-                        <h3>No applications yet</h3>
-                        <p>Apply to jobs to see your applications here</p>
-                    </div>
-                ) : (
-                    <div className="applicationsList">
-                        {applications.map((app) => (
-                            <div key={app.id} className="appItem">
-                                <div className="appInfo">
-                                    <span className="appJobTitle">{app.jobTitle || 'Job Position'}</span>
-                                    <span className="appCompany">{app.company || 'Company'}</span>
-                                </div>
-                                <span className={`appScore ${getScoreClass(app.score)}`}>
-                                    {(app.score * 100).toFixed(0)}%
-                                </span>
-                            </div>
-                        ))}
                     </div>
                 )}
             </div>
