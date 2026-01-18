@@ -27,7 +27,7 @@ A FastAPI-based application designed to reduce hiring bias by parsing, anonymizi
 
 2. **Create a Virtual Environment**
    ```bash
-   python3 -m venv venv
+   python3.11 -m venv venv
    ```
 
 3. **Activate the Virtual Environment**
